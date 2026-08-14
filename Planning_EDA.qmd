@@ -1,0 +1,61 @@
+---
+title: "NBA Project 2026"
+format: html
+editor: visual
+---
+
+## Question
+
+1.  How does a player's pull or gravity impact their team's offense?
+2.  
+
+## Context
+
+The mid-range shot is consistently the most inefficient shot taken in the NBA, often contested by defenders. Especially with the growing popularity of the three-point shot, which mathematically yields a greater value than a two-point shot. Despite the statistical lack in value, managing the mid-range area remains an important part of the game. With certain player excelling in this area and demonstrating threat, their ability to draw defenders to them can open up space for surrounding perimeter shooters. A great mid-range shooter is able to pull these defenders in and quickly kick-out the ball to a teammate for a chance at a 3-point play rather than 2. In the NBA, every inch, every millimeter is important.
+
+## Data
+
+hoopR package: play by play data where each observation indicates an important event from the possession (shot, fouls, rebounds, turnovers) and its corresponding player involved and outcome. Provided coordinates for events.
+
+NBA Insider: gravity metric per player different types of gravity metrics depending on location and player possession. Only player level based on different times of the season (regular season, in-season tournament, playoffs). Had to scrape, not available on the NBA API or through hoopR package
+
+SportsVU only public NBA tracking data (25 hz) available. Because of the NBA's continous time nature, play by play data does not reveal all the aspects behind each possession. We don't understand each pass or how the players moved off-ball. Being able to track player movements in continuous time can allow us to discover hidden synergy between players and non explicit aspects of the game.
+
+## EDA
+
+Identify kick-out plays (drive to basket or linger in mid-range -\> three point attempt)
+
+Heatmap for players with higher gravity metrics
+
+Identify mid range shot efficiency
+
+Identify typical three point shots
+
+```{r}
+# loading libraries
+library(tidyverse)
+library(hoopR)
+library(nbastatR)
+library(stringr)
+
+remotes::install_github("abresler/nbastatR")
+
+pbp <- load_nba_pbp(seasons = 2025)
+
+```
+
+```{r}
+shot_attempts <- pbp |>
+  filter(str_ends(type_text, "Shot"))
+
+shot_attempts |>
+  filter(score_value == 0) |>
+  ggplot(aes(x = coordinate_x_raw, y = coordinate_y_raw)) +
+  geom_hex() 
+
+shot_attempts |>
+  filter(home_team_abbrev %in% c("SA", "NY", "OKC")) |>
+  ggplot(aes(x = coordinate_x_raw,y = coordinate_y_raw, z = score_value)) +
+  stat_summary_hex(fun = mean, bins = 10) +
+  facet_wrap(~home_team_abbrev)
+```
